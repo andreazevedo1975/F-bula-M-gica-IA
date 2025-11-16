@@ -23,15 +23,17 @@ export interface GenerationStatus {
   message: string;
 }
 
-// Fix: Create a named interface for `aistudio` to resolve declaration conflicts.
-interface AIStudio {
-  hasSelectedApiKey: () => Promise<boolean>;
-  openSelectKey: () => Promise<void>;
-}
-
 // Adiciona aistudio ao objeto global window para verificação da chave de API do Veo
+// Fix: Defined a global `AIStudio` interface to resolve conflicting type declarations for `window.aistudio`.
 declare global {
+  interface AIStudio {
+    hasSelectedApiKey: () => Promise<boolean>;
+    openSelectKey: () => Promise<void>;
+  }
+
   interface Window {
-    aistudio: AIStudio;
+    // FIX: Added `readonly` modifier to resolve conflict with another global declaration of 'aistudio'.
+    readonly aistudio: AIStudio;
+    mammoth: any;
   }
 }

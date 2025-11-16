@@ -70,6 +70,15 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
   const sourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
   const audioBufferRef = useRef<AudioBuffer | null>(null);
 
+  // Efeito para limpar o AudioContext ao desmontar o componente para evitar vazamentos de recursos
+  useEffect(() => {
+    return () => {
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close().catch(console.error);
+      }
+    };
+  }, []);
+
   const totalPages = pages.length;
   const totalViews = 1 + totalPages * 2;
 
@@ -91,7 +100,7 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
 
     // Se for uma visualização de texto, prepare o novo áudio
     if (isTextView && page?.audioData) {
-      if (!audioContextRef.current) {
+      if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
       }
       const ctx = audioContextRef.current;
@@ -102,14 +111,7 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
         .catch(err => console.error("Falha ao decodificar áudio", err));
     }
 
-    return () => {
-      if (sourceNodeRef.current) {
-        sourceNodeRef.current.stop();
-        sourceNodeRef.current.disconnect();
-        sourceNodeRef.current = null;
-      }
-    };
-  }, [currentViewIndex, pages, isTextView, page]);
+  }, [currentViewIndex, page]);
 
   const goToPrevious = () => {
     setCurrentViewIndex((prev) => (prev > 0 ? prev - 1 : totalViews - 1));
@@ -169,6 +171,7 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
         onUpdatePage({ ...page, audioData: newAudioData });
       } catch (error) {
         console.error("Falha ao regenerar áudio com nova voz", error);
+        alert("Ocorreu um erro ao alterar a voz da narração. Por favor, tente novamente.");
       } finally {
         setIsRegeneratingAudio(false);
       }
@@ -180,30 +183,37 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
   const renderContent = () => {
     if (isCover) {
       return (
-        <div className="w-full h-full relative flex items-center justify-center">
-          <img src={pages[0].imageUrl} alt="Imagem da capa" className="absolute inset-0 w-full h-full object-cover rounded-lg" />
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center p-8 rounded-lg">
-            <h1 className="text-4xl sm:text-5xl text-white font-bold text-center" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
+        <div className="w-full h-full relative flex flex-col items-center justify-end text-center rounded-lg overflow-hidden group">
+          <img src={pages[0].imageUrl} alt="Imagem da capa" className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-in-out group-hover:scale-110" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
+          <div className="relative p-8 sm:p-12 z-10">
+            <h1 className="text-4xl sm:text-6xl text-white font-lora font-bold" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.9)' }}>
               {title}
             </h1>
+            <button
+                onClick={goToNext}
+                className="mt-8 bg-white/20 backdrop-blur-sm text-white font-semibold py-3 px-8 rounded-full border border-white/30 hover:bg-white/30 transition duration-300 transform hover:scale-105"
+            >
+                Começar a Ler
+            </button>
           </div>
         </div>
       );
     }
     if (isImageView && page) {
       return (
-        <div className="w-full h-full flex items-center justify-center">
-          <img src={page.imageUrl} alt={page.imagePrompt} className="max-w-full max-h-full object-contain rounded-lg shadow-lg" />
-        </div>
+        <img src={page.imageUrl} alt={page.imagePrompt} className="w-full h-full object-cover" />
       );
     }
     if (isTextView && page) {
       return (
-        <div className="w-full h-full flex flex-col items-center justify-center text-center p-4 sm:p-8">
-           <button onClick={handlePlayPause} disabled={!audioBufferRef.current || isRegeneratingAudio} className="mb-6 flex-shrink-0 w-12 h-12 flex items-center justify-center bg-gray-700 rounded-full hover:bg-purple-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+        <div 
+          className="w-full h-full flex flex-col items-center justify-center text-center p-4 sm:p-8 bg-gradient-to-br from-[#1a1a2e] to-[#161625]"
+        >
+           <button onClick={handlePlayPause} disabled={!audioBufferRef.current || isRegeneratingAudio} className="mb-6 flex-shrink-0 w-14 h-14 flex items-center justify-center bg-gray-700/50 rounded-full hover:bg-purple-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-600">
               {isRegeneratingAudio ? <div className="w-6 h-6 border-2 border-t-purple-400 border-gray-500 rounded-full animate-spin"></div> : (isPlaying ? <PauseIcon /> : <PlayIcon />)}
           </button>
-          <p className="text-gray-300 leading-relaxed text-xl sm:text-2xl max-w-2xl">
+          <p className="text-gray-200 leading-relaxed text-xl sm:text-2xl max-w-3xl font-lora">
             {page.text}
           </p>
         </div>
@@ -239,28 +249,29 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
 
 
   return (
-    <div className="bg-gray-800 p-4 sm:p-6 rounded-2xl shadow-2xl relative flex flex-col">
+    <div className="glass-card p-4 sm:p-6 rounded-2xl relative flex flex-col">
       <div id="printable-area" className="hidden print:block">
-        <div className="w-full h-screen p-8 flex flex-col justify-center items-center page-break text-center">
-            <h1 className="text-5xl font-bold text-gray-900 mb-8">{title}</h1>
-            <img src={pages[0].imageUrl} alt="Imagem da capa" className="w-full max-w-2xl aspect-video object-cover rounded-lg shadow-lg" />
+        <div className="w-full h-screen p-8 flex flex-col justify-center items-center page-break text-center bg-white text-black">
+            <h1 className="text-6xl font-bold font-lora mb-8">{title}</h1>
+            <img src={pages[0].imageUrl} alt="Imagem da capa" className="w-full max-w-3xl aspect-video object-cover rounded-lg shadow-2xl" />
+            <p className="mt-auto text-lg">Uma história gerada por Fábula Mágica AI</p>
         </div>
         {pages.map((p, index) => (
-          <div key={index} className="w-full h-screen p-8 flex flex-col page-break">
-            <img src={p.imageUrl} alt={p.imagePrompt} className="w-full aspect-[4/3] object-cover rounded-lg mb-4" />
-            <div className="text-gray-900 flex-grow">
-                <p className="text-lg">{p.text}</p>
+          <div key={index} className="w-full h-screen p-8 flex flex-col page-break bg-white text-black">
+            <img src={p.imageUrl} alt={p.imagePrompt} className="w-full aspect-[4/3] object-cover rounded-lg mb-6 shadow-lg" />
+            <div className="flex-grow">
+                <p className="text-2xl leading-relaxed">{p.text}</p>
             </div>
-            <p className="text-right text-lg font-bold text-gray-900">{p.pageNumber} / {totalPages}</p>
+            <p className="text-right text-lg font-bold mt-4">{p.pageNumber} / {totalPages}</p>
           </div>
         ))}
       </div>
 
-      <div className="w-full aspect-[4/3] flex-grow">
+      <div className="w-full aspect-video flex-grow rounded-lg overflow-hidden">
         {renderContent()}
       </div>
       
-      <div className="flex flex-wrap items-center justify-between mt-6 pt-4 border-t border-gray-700 no-print gap-4">
+      <div className="flex flex-wrap items-center justify-between mt-6 pt-4 border-t border-white/10 no-print gap-4">
          <div className="flex items-center space-x-2 flex-wrap gap-2">
             <button onClick={handlePrint} className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
                 <PrinterIcon />
@@ -293,7 +304,7 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
             <ChevronLeftIcon />
           </button>
           <span className="font-mono text-lg text-gray-400 w-24 text-center">
-            {isCover ? 'Capa' : `${pageIndex + 1} / ${totalPages}`}
+            {isCover ? 'Capa' : `${Math.ceil(currentViewIndex / 2)} / ${totalPages}`}
           </span>
           <button onClick={goToNext} className="p-2 bg-gray-700 rounded-full hover:bg-purple-500 transition duration-200" aria-label="Próxima página">
             <ChevronRightIcon />

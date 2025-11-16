@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import { StoryGeneratorForm } from './components/StoryGeneratorForm';
 import { StorybookView } from './components/StorybookView';
 import LoadingIndicator from './components/LoadingIndicator';
-import { generateStoryContent, generateImage, generateSpeech, generateStoryVideo } from './services/geminiService';
+import { generateTitleFromPlot, generateStoryContent, generateImage, generateSpeech, generateStoryVideo } from './services/geminiService';
 import type { StoryPageData, GenerationStatus, UploadedImage } from './types';
 
 function App() {
@@ -20,8 +21,8 @@ function App() {
   });
   const [error, setError] = useState<string | null>(null);
 
-  const handleGenerateStory = async (title: string, numPages: number, characterImage: UploadedImage | null) => {
-    setGenerationStatus({ isLoading: true, message: 'Criando a estrutura da sua história...' });
+  const handleGenerateStory = async (plot: string, numPages: number, characterImage: UploadedImage | null) => {
+    setGenerationStatus({ isLoading: true, message: 'Criando um título para sua história...' });
     setError(null);
     setStoryPages([]);
     setStoryTitle('');
@@ -29,9 +30,14 @@ function App() {
     setVideoGenerationStatus({ isLoading: false, message: '' });
 
     try {
+      // 1. Generate title from plot
+      const title = await generateTitleFromPlot(plot, characterImage);
       setStoryTitle(title);
-      // 1. Generate story text and image prompts
-      const storyContent = await generateStoryContent(title, numPages, characterImage);
+      
+      setGenerationStatus({ isLoading: true, message: 'Criando a estrutura da sua história...' });
+
+      // 2. Generate story text and image prompts from plot
+      const storyContent = await generateStoryContent(plot, numPages, characterImage);
       
       const pagesWithPrompts: Omit<StoryPageData, 'imageUrl' | 'audioData'>[] = storyContent.map((page, index) => ({
         pageNumber: index + 1,
@@ -43,14 +49,14 @@ function App() {
       for (let i = 0; i < pagesWithPrompts.length; i++) {
         const page = pagesWithPrompts[i];
         
-        // 2. Generate image
+        // 3. Generate image
         setGenerationStatus({ 
           isLoading: true, 
           message: `Gerando imagem para a página ${i + 1} de ${numPages}...` 
         });
         const imageUrl = await generateImage(page.imagePrompt, characterImage);
 
-        // 3. Generate audio
+        // 4. Generate audio
          setGenerationStatus({ 
           isLoading: true, 
           message: `Gerando narração para a página ${i + 1} de ${numPages}...` 
@@ -79,8 +85,8 @@ function App() {
         const hasKey = await window.aistudio.hasSelectedApiKey();
         if (!hasKey) {
             await window.aistudio.openSelectKey();
-            setError("Por favor, selecione uma chave de API para o Veo e tente novamente. A geração de vídeo pode ter custos associados. Consulte ai.google.dev/gemini-api/docs/billing.");
-            return;
+            // Fix: Per guidelines, assume key selection was successful and proceed.
+            // If user cancels or key is invalid, the API call will fail and be caught by the catch block.
         }
 
         setVideoGenerationStatus({ isLoading: true, message: 'Iniciando a geração do vídeo...' });
@@ -115,23 +121,23 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col items-center p-4 sm:p-6 lg:p-8">
-      <header className="w-full max-w-4xl text-center mb-8">
-        <h1 className="text-4xl sm:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
-          Gerador de Livros de Histórias Gemini
+    <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 lg:p-8 font-nunito">
+      <header className="w-full max-w-5xl text-center mb-10">
+        <h1 className="text-5xl sm:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 font-lora">
+          Fábula Mágica AI
         </h1>
-        <p className="mt-2 text-gray-400">
-          Dê vida às suas histórias. Envie a imagem de um personagem, escolha um título e deixe o Gemini criar um livro de histórias único.
+        <p className="mt-4 text-lg text-gray-300">
+          Dê vida à sua imaginação. Crie, ilustre e narre livros de histórias encantados com o poder da IA.
         </p>
       </header>
       
-      <main className="w-full max-w-4xl flex-grow">
-        <div className="bg-gray-800 p-6 rounded-2xl shadow-2xl mb-8">
+      <main className="w-full max-w-5xl flex-grow">
+        <div className="glass-card p-6 sm:p-8 rounded-2xl mb-8">
           <StoryGeneratorForm onGenerate={handleGenerateStory} isLoading={generationStatus.isLoading} />
         </div>
 
         {error && (
-          <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-center">
+          <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-center mb-8">
             <p>{error}</p>
           </div>
         )}
@@ -151,7 +157,7 @@ function App() {
           </div>
         )}
       </main>
-      <footer className="w-full max-w-4xl text-center mt-8 text-gray-500 text-sm">
+      <footer className="w-full max-w-4xl text-center mt-12 text-gray-500 text-sm">
         <p>Desenvolvido com Google Gemini</p>
       </footer>
     </div>

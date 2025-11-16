@@ -8,7 +8,7 @@ if (!process.env.API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-export async function generateTitle(characterImage: UploadedImage | null): Promise<string> {
+export async function suggestPlot(characterImage: UploadedImage | null): Promise<string> {
   const parts: Part[] = [];
   let prompt: string;
 
@@ -19,9 +19,9 @@ export async function generateTitle(characterImage: UploadedImage | null): Promi
         data: characterImage.base64,
       },
     });
-    prompt = `Sugira um título curto, criativo e cativante em português brasileiro para um livro de histórias infantil. A história é sobre o personagem na imagem. O título deve ter no máximo 10 palavras, estar em uma única linha e não conter aspas.`;
+    prompt = `Sugira um enredo curto e criativo em português brasileiro para um livro de histórias infantil, estrelando o personagem da imagem. O enredo deve descrever o início, o meio e o fim da aventura em cerca de 100 a 150 palavras.`;
   } else {
-    prompt = `Sugira um título curto, criativo e cativante em português brasileiro para um livro de histórias infantil. O título deve ter no máximo 10 palavras, estar em uma única linha e não conter aspas.`;
+    prompt = `Sugira um enredo curto e criativo em português brasileiro para um livro de histórias infantil sobre uma quokka amigável chamada Quindim. O enredo deve descrever o início, o meio e o fim de uma aventura mágica em cerca de 100 a 150 palavras.`;
   }
   parts.push({ text: prompt });
 
@@ -33,11 +33,40 @@ export async function generateTitle(characterImage: UploadedImage | null): Promi
         temperature: 0.9,
       },
     });
-    return response.text.trim().replace(/"/g, '');
+    return response.text.trim();
   } catch (error) {
-    console.error("Erro ao gerar título:", error);
-    throw new Error("Falha ao sugerir um título.");
+    console.error("Erro ao sugerir enredo:", error);
+    throw new Error("Falha ao sugerir um enredo.");
   }
+}
+
+export async function generateTitleFromPlot(plot: string, characterImage: UploadedImage | null): Promise<string> {
+    const parts: Part[] = [];
+    if (characterImage) {
+        parts.push({
+          inlineData: {
+            mimeType: characterImage.mimeType,
+            data: characterImage.base64,
+          },
+        });
+    }
+
+    const prompt = `Com base no seguinte enredo de uma história infantil, crie um título curto, criativo e cativante em português brasileiro. O título deve ter no máximo 10 palavras, estar em uma única linha e não conter aspas.\n\nEnredo: "${plot}"`;
+    parts.push({ text: prompt });
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: { parts },
+            config: {
+                temperature: 0.8,
+            },
+        });
+        return response.text.trim().replace(/"/g, '');
+    } catch (error) {
+        console.error("Erro ao gerar título a partir do enredo:", error);
+        throw new Error("Falha ao gerar título.");
+    }
 }
 
 const storyGenerationSchema = {
@@ -47,11 +76,11 @@ const storyGenerationSchema = {
     properties: {
       storyText: {
         type: Type.STRING,
-        description: 'O conteúdo de texto para esta página da história. Deve ser envolvente para o leitor e em português brasileiro.',
+        description: 'O conteúdo de texto para esta página da história. Deve ser envolvente para o leitor, em português brasileiro, e seguir o enredo fornecido.',
       },
       imagePrompt: {
         type: Type.STRING,
-        description: 'Um prompt detalhado e descritivo para um gerador de imagens de IA criar uma ilustração visualmente deslumbrante e relevante para o texto desta página. Descreva a cena, personagens, cores e o clima. Se um personagem foi fornecido na imagem inicial, garanta que o prompt instrua o gerador a manter a consistência visual com esse personagem.',
+        description: 'Um prompt detalhado e descritivo para um gerador de imagens de IA criar uma ilustração visualmente deslumbrante e relevante para o texto desta página. Descreva a cena, personagens, cores e o clima, seguindo o enredo. Se um personagem foi fornecido na imagem inicial, garanta que o prompt instrua o gerador a manter a consistência visual com esse personagem.',
       },
     },
     required: ["storyText", "imagePrompt"]
@@ -59,7 +88,7 @@ const storyGenerationSchema = {
 };
 
 export async function generateStoryContent(
-  title: string,
+  plot: string,
   numPages: number,
   characterImage: UploadedImage | null
 ): Promise<StoryContentResponse[]> {
@@ -75,17 +104,17 @@ export async function generateStoryContent(
       },
     });
     finalPrompt = `
-      Gere um enredo para um livro de histórias infantil em português brasileiro com base no título "${title}", estrelando o personagem da imagem fornecida.
-      O livro de histórias deve ter exatamente ${numPages} páginas.
+      Desenvolva um livro de histórias infantil em português brasileiro com base no seguinte enredo, estrelando o personagem da imagem fornecida: "${plot}".
+      O livro de histórias deve ser dividido em exatamente ${numPages} páginas.
       Para cada página, forneça o texto da história e um prompt de imagem detalhado. O prompt de imagem deve instruir o gerador de imagens a recriar o personagem da imagem original de forma consistente na cena descrita.
-      Garanta que a história flua logicamente e seja apropriada para o título.
+      Garanta que a história flua logicamente de acordo com o enredo.
       A saída final deve ser um array JSON com ${numPages} objetos, seguindo o schema fornecido.`;
   } else {
     finalPrompt = `
-      Gere um enredo para um livro de histórias infantil em português brasileiro com base no título "${title}".
-      O livro de histórias deve ter exatamente ${numPages} páginas.
+      Desenvolva um livro de histórias infantil em português brasileiro com base no seguinte enredo: "${plot}".
+      O livro de histórias deve ser dividido em exatamente ${numPages} páginas.
       Para cada página, forneça o texto da história e um prompt detalhado para gerar uma imagem correspondente.
-      Garanta que a história flua logicamente de uma página para a outra e seja apropriada para o título.
+      Garanta que a história flua logicamente de uma página para a outra, seguindo o enredo.
       A saída final deve ser um array JSON com ${numPages} objetos, seguindo o schema fornecido.`;
   }
   parts.push({ text: finalPrompt });
@@ -106,7 +135,11 @@ export async function generateStoryContent(
     const parsedResponse = JSON.parse(jsonText);
 
     if (!Array.isArray(parsedResponse) || parsedResponse.length === 0) {
-      throw new Error("Formato de resposta inválido da API.");
+      throw new Error("Formato de resposta inválido da API: a resposta não é um array ou está vazia.");
+    }
+    
+    if (parsedResponse.length !== numPages) {
+       throw new Error(`A API retornou um número inesperado de páginas. Solicitado: ${numPages}, Recebido: ${parsedResponse.length}.`);
     }
 
     return parsedResponse as StoryContentResponse[];
@@ -228,5 +261,7 @@ export async function generateStoryVideo(
         throw new Error("Não foi possível obter o link de download do vídeo.");
     }
     
+    // A chave de API é necessária para acessar a URL de download do vídeo gerado.
+    // Ela é injetada no ambiente de execução.
     return `${downloadLink}&key=${process.env.API_KEY}`;
 }
