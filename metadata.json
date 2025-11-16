@@ -1,0 +1,5 @@
+{
+  "name": "Gerador de Livros de Histórias Gemini",
+  "description": "Uma aplicação para gerar livros de histórias de várias páginas com texto, imagens e áudio usando a API Gemini. Os usuários podem especificar um tópico e o número de páginas, e depois imprimir ou salvar a história gerada.",
+  "requestFramePermissions": []
+}
