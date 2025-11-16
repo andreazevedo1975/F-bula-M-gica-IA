@@ -164,7 +164,7 @@ export const StoryGeneratorForm: React.FC<StoryGeneratorFormProps> = ({ onGenera
             value={numPages}
             onChange={(e) => setNumPages(Math.max(1, parseInt(e.target.value, 10)) || 1)}
             min="1"
-            max="10"
+            max="50"
             className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200 mt-1"
             required
             disabled={isLoading}

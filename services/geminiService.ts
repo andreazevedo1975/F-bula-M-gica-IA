@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type, Modality } from "@google/genai";
-import type { StoryContentResponse, UploadedImage } from '../types';
+import type { StoryContentResponse, UploadedImage, PrebuiltVoice, StoryPageData } from '../types';
 import type { Part } from '@google/genai';
 
 if (!process.env.API_KEY) {
@@ -158,7 +158,7 @@ export async function generateImage(prompt: string, characterImage: UploadedImag
     }
 }
 
-export async function generateSpeech(text: string): Promise<string> {
+export async function generateSpeech(text: string, voice: PrebuiltVoice = 'Kore'): Promise<string> {
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
@@ -167,7 +167,7 @@ export async function generateSpeech(text: string): Promise<string> {
         responseModalities: [Modality.AUDIO],
         speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: 'Kore' },
+              prebuiltVoiceConfig: { voiceName: voice },
             },
         },
       },
@@ -181,4 +181,52 @@ export async function generateSpeech(text: string): Promise<string> {
     console.error("Erro ao gerar fala:", error);
     throw new Error("Falha ao gerar fala a partir da API Gemini.");
   }
+}
+
+export async function generateStoryVideo(
+  aiInstance: GoogleGenAI,
+  title: string,
+  firstPage: StoryPageData,
+  onProgress: (message: string) => void
+): Promise<string> {
+    onProgress('Preparando os dados para o vídeo...');
+    const prompt = `Crie um vídeo animado curto baseado nesta história infantil: Título: "${title}". A primeira cena mostra: "${firstPage.text}".`;
+    
+    const [header, base64Data] = firstPage.imageUrl.split(',');
+    const mimeType = header.match(/:(.*?);/)?.[1] || 'image/png';
+
+    onProgress('Enviando solicitação para a API de vídeo...');
+    let operation = await aiInstance.models.generateVideos({
+        model: 'veo-3.1-fast-generate-preview',
+        prompt: prompt,
+        image: {
+            imageBytes: base64Data,
+            mimeType: mimeType,
+        },
+        config: {
+            numberOfVideos: 1,
+            resolution: '720p',
+            aspectRatio: '16:9'
+        }
+    });
+    
+    onProgress('A geração do vídeo começou. Isso pode levar alguns minutos...');
+    while (!operation.done) {
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        onProgress('Verificando o status da geração do vídeo...');
+        operation = await aiInstance.operations.getVideosOperation({ operation: operation });
+    }
+
+    if (operation.error) {
+        throw new Error(`Erro na operação de vídeo: ${operation.error.message}`);
+    }
+
+    onProgress('Vídeo gerado! Obtendo o link para download...');
+    const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+
+    if (!downloadLink) {
+        throw new Error("Não foi possível obter o link de download do vídeo.");
+    }
+    
+    return `${downloadLink}&key=${process.env.API_KEY}`;
 }

@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
+import { GoogleGenAI } from '@google/genai';
 import { StoryGeneratorForm } from './components/StoryGeneratorForm';
 import { StorybookView } from './components/StorybookView';
 import LoadingIndicator from './components/LoadingIndicator';
-import { generateStoryContent, generateImage, generateSpeech } from './services/geminiService';
+import { generateStoryContent, generateImage, generateSpeech, generateStoryVideo } from './services/geminiService';
 import type { StoryPageData, GenerationStatus, UploadedImage } from './types';
 
 function App() {
   const [storyPages, setStoryPages] = useState<StoryPageData[]>([]);
   const [storyTitle, setStoryTitle] = useState<string>('');
   const [generationStatus, setGenerationStatus] = useState<GenerationStatus>({
+    isLoading: false,
+    message: ''
+  });
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [videoGenerationStatus, setVideoGenerationStatus] = useState<GenerationStatus>({
     isLoading: false,
     message: ''
   });
@@ -19,6 +25,8 @@ function App() {
     setError(null);
     setStoryPages([]);
     setStoryTitle('');
+    setVideoUrl(null);
+    setVideoGenerationStatus({ isLoading: false, message: '' });
 
     try {
       setStoryTitle(title);
@@ -61,6 +69,51 @@ function App() {
     }
   };
 
+  const handleGenerateVideo = async () => {
+    if (!storyPages.length) return;
+    
+    setVideoUrl(null);
+    setError(null);
+
+    try {
+        const hasKey = await window.aistudio.hasSelectedApiKey();
+        if (!hasKey) {
+            await window.aistudio.openSelectKey();
+            setError("Por favor, selecione uma chave de API para o Veo e tente novamente. A geração de vídeo pode ter custos associados. Consulte ai.google.dev/gemini-api/docs/billing.");
+            return;
+        }
+
+        setVideoGenerationStatus({ isLoading: true, message: 'Iniciando a geração do vídeo...' });
+        
+        const aiInstance = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        
+        const url = await generateStoryVideo(
+            aiInstance,
+            storyTitle,
+            storyPages[0],
+            (message: string) => setVideoGenerationStatus({ isLoading: true, message })
+        );
+        
+        setVideoUrl(url);
+        setVideoGenerationStatus({ isLoading: false, message: 'Vídeo pronto!' });
+    } catch (err: any) {
+        console.error("Erro ao gerar vídeo:", err);
+        if (err.message && err.message.includes("Requested entity was not found")) {
+            setError("Sua chave de API pode não ter acesso ao Veo. Por favor, selecione uma chave diferente e tente novamente. Visite ai.google.dev/gemini-api/docs/billing para mais informações.");
+        } else {
+            setError('Ocorreu um erro ao gerar o vídeo. Por favor, tente novamente.');
+        }
+        setVideoGenerationStatus({ isLoading: false, message: '' });
+    }
+};
+
+
+  const handleUpdatePage = (updatedPage: StoryPageData) => {
+    setStoryPages(prevPages => 
+      prevPages.map(p => p.pageNumber === updatedPage.pageNumber ? updatedPage : p)
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white font-sans flex flex-col items-center p-4 sm:p-6 lg:p-8">
       <header className="w-full max-w-4xl text-center mb-8">
@@ -87,7 +140,14 @@ function App() {
 
         {storyPages.length > 0 && (
           <div id="storybook-container">
-            <StorybookView title={storyTitle} pages={storyPages} />
+            <StorybookView 
+              title={storyTitle} 
+              pages={storyPages} 
+              onUpdatePage={handleUpdatePage}
+              videoUrl={videoUrl}
+              videoGenerationStatus={videoGenerationStatus}
+              onGenerateVideo={handleGenerateVideo}
+            />
           </div>
         )}
       </main>
