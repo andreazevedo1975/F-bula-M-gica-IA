@@ -304,17 +304,20 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
         );
       }
       return (
-        <div className="w-full h-full relative flex flex-col items-center justify-end text-center rounded-lg overflow-hidden group">
-          <img src={pages[0].imageUrl} alt="Imagem da capa" className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-in-out group-hover:scale-110" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent"></div>
-          <div className="relative p-8 sm:p-12 z-10 flex flex-col items-center">
+        <div className="w-full h-full relative flex flex-col items-center justify-center text-center rounded-lg overflow-hidden group p-4">
+          <img src={pages[0].imageUrl} alt="Imagem da capa" className="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 ease-in-out group-hover:scale-110 filter blur-sm" />
+          <div className="absolute inset-0 bg-black/60"></div>
+          <div className="relative z-10 flex flex-col items-center">
+            <div className="w-full max-w-md aspect-video mb-8 rounded-lg overflow-hidden shadow-2xl shadow-black/50 border-4 border-white/10">
+                <img src={pages[0].imageUrl} alt="Imagem da capa" className="w-full h-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-105" />
+            </div>
             <h1 className="text-4xl sm:text-6xl text-white font-lora font-bold" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.9)' }}>
               {title}
             </h1>
              <div className="flex items-center space-x-4 mt-8">
                 <button
                     onClick={goToNext}
-                    className="bg-white/20 backdrop-blur-sm text-white font-semibold py-3 px-8 rounded-full border border-white/30 hover:bg-white/30 transition duration-300 transform hover:scale-105"
+                    className="magic-button bg-white/20 backdrop-blur-sm text-white font-semibold py-3 px-8 rounded-full border border-white/30 hover:bg-white/30 transition duration-300 transform hover:scale-105"
                 >
                     Abrir o Livro Mágico
                 </button>
@@ -345,12 +348,12 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
     }
     if (isImageView && page) {
       return (
-        <div className="relative w-full h-full group">
-          <img src={page.imageUrl} alt={page.imagePrompt} className="w-full h-full object-cover" />
+        <div className="relative w-full h-full group bg-black">
+          <img src={page.imageUrl} alt={page.imagePrompt} className="w-full h-full object-contain" />
            <button
             onClick={handleRegenerateImage}
             disabled={isRegeneratingImage === page.pageNumber}
-            className="absolute bottom-4 right-4 bg-black/50 text-white p-2 rounded-full hover:bg-purple-600 transition-opacity opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white p-2.5 rounded-full hover:bg-purple-600 transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50 disabled:cursor-not-allowed"
             title="Regenerar Imagem"
           >
             {isRegeneratingImage === page.pageNumber ? (
@@ -365,12 +368,15 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
     if (isTextView && page) {
       return (
         <div 
-          className="w-full h-full flex flex-col items-center justify-center text-center p-4 sm:p-8 bg-gradient-to-br from-[#1a1a2e] to-[#161625]"
+          className="w-full h-full flex flex-col items-center justify-center text-center p-6 sm:p-12"
+          style={{
+            background: 'radial-gradient(circle, #2a2a4e 0%, #161625 100%)'
+          }}
         >
-           <button onClick={handlePlayPause} disabled={!audioBufferRef.current || isRegeneratingAudio} className="mb-6 flex-shrink-0 w-14 h-14 flex items-center justify-center bg-gray-700/50 rounded-full hover:bg-purple-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed border border-gray-600">
-              {isRegeneratingAudio ? <div className="w-6 h-6 border-2 border-t-purple-400 border-gray-500 rounded-full animate-spin"></div> : (isPlaying ? <PauseIcon /> : <PlayIcon />)}
+           <button onClick={handlePlayPause} disabled={!audioBufferRef.current || isRegeneratingAudio} className="mb-8 flex-shrink-0 w-16 h-16 flex items-center justify-center bg-purple-600/50 rounded-full hover:bg-purple-600 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-purple-400/50 shadow-lg shadow-purple-900/50 transform hover:scale-110">
+              {isRegeneratingAudio ? <div className="w-8 h-8 border-4 border-t-white border-purple-300/50 rounded-full animate-spin"></div> : (isPlaying ? <PauseIcon /> : <PlayIcon />)}
           </button>
-          <p className="text-gray-200 leading-relaxed text-xl sm:text-2xl max-w-3xl font-lora">
+          <p className="text-gray-200 leading-relaxed text-2xl sm:text-3xl max-w-3xl font-lora">
             {page.text}
           </p>
         </div>
@@ -396,10 +402,10 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
               setDirection(currentViewIndex > 0 ? 'prev' : null);
               setCurrentViewIndex(0);
             }}
-            className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
+            className="flex items-center space-x-2 bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 transform hover:scale-105"
           >
             <VideoIcon />
-            <span>Assistir ao Desenho</span>
+            <span>Assistir</span>
           </button>
           <a
             href={videoUrl}
@@ -407,20 +413,20 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
             className="flex items-center space-x-2 bg-green-600 hover:bg-green-500 text-white font-semibold py-2 px-4 rounded-lg transition duration-200"
           >
             <DownloadIcon />
-            <span>Baixar o Desenho</span>
+            <span>Baixar</span>
           </a>
         </>
       );
     }
     return (
-       <button onClick={onGenerateVideo} className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+       <button onClick={onGenerateVideo} className="flex items-center space-x-2 bg-indigo-600/80 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 transform hover:scale-105">
           <VideoIcon />
-          <span>Transformar em Desenho Animado</span>
+          <span>Transformar em Desenho</span>
       </button>
     );
   }
 
-  const animationClass = direction === 'next' ? 'page-turn-next' : direction === 'prev' ? 'page-turn-prev' : '';
+  const animationClass = direction === 'next' ? 'content-next' : direction === 'prev' ? 'content-prev' : '';
 
   return (
     <div className="glass-card p-4 sm:p-6 rounded-2xl relative flex flex-col">
@@ -441,7 +447,7 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
         ))}
       </div>
 
-      <div className="w-full aspect-video flex-grow rounded-lg overflow-hidden">
+      <div className="w-full aspect-video flex-grow rounded-lg overflow-hidden shadow-2xl shadow-black/50">
         <div key={currentViewIndex} className={`w-full h-full ${animationClass}`}>
           {renderContent()}
         </div>
@@ -449,22 +455,25 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
       
       <div className="flex flex-wrap items-center justify-between mt-6 pt-4 border-t border-white/10 no-print gap-4">
          <div className="flex items-center space-x-2 flex-wrap gap-2">
-            <button onClick={handlePrint} className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+            <button onClick={handlePrint} className="flex items-center space-x-2 bg-gray-700/80 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
                 <PrinterIcon />
-                <span>Imprimir a Fábula</span>
+                <span>Imprimir</span>
             </button>
-            <button onClick={handleCopyAllText} className="flex items-center space-x-2 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
+            <button onClick={handleCopyAllText} className="flex items-center space-x-2 bg-gray-700/80 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200">
                 <ClipboardIcon />
-                <span>{copyStatus ? 'Copiado!' : 'Copiar a História'}</span>
+                <span>{copyStatus ? 'Copiado!' : 'Copiar Texto'}</span>
             </button>
              {renderVideoButton()}
+        </div>
+
+        <div className="flex items-center space-x-2">
             {isTextView && (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 bg-gray-800/60 p-1 rounded-lg">
                 <select 
                   value={selectedVoice} 
                   onChange={handleVoiceChange}
                   disabled={isRegeneratingAudio}
-                  className="bg-gray-700 border-gray-600 text-white text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 block w-full p-2.5"
+                  className="bg-gray-700 border-gray-600 text-white text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 block w-full p-2"
                   aria-label="Voz do Narrador Mágico"
                 >
                   {availableVoices.map(voice => (
@@ -474,7 +483,7 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
                 <button
                   onClick={handleRegenerateNarration}
                   disabled={isRegeneratingAudio}
-                  className="p-2.5 bg-gray-700 rounded-lg hover:bg-purple-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="p-2 bg-gray-700 rounded-lg hover:bg-purple-500 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Regenerar Narração"
                 >
                   {isRegeneratingAudio ? (
@@ -485,16 +494,13 @@ export const StorybookView: React.FC<StorybookViewProps> = ({ title, pages, onUp
                 </button>
               </div>
             )}
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <button onClick={goToPrevious} className="p-2 bg-gray-700 rounded-full hover:bg-purple-500 transition duration-200" aria-label="Página anterior">
+          <button onClick={goToPrevious} className="p-3 bg-gray-700/80 rounded-full hover:bg-purple-600 transition duration-200" aria-label="Página anterior">
             <ChevronLeftIcon />
           </button>
-          <span className="font-mono text-lg text-gray-400 w-24 text-center">
+          <span className="font-mono text-lg text-gray-400 w-28 text-center">
             {isCover ? 'Capa Mágica' : `${Math.ceil(currentViewIndex / 2)} / ${totalPages}`}
           </span>
-          <button onClick={goToNext} className="p-2 bg-gray-700 rounded-full hover:bg-purple-500 transition duration-200" aria-label="Próxima página">
+          <button onClick={goToNext} className="p-3 bg-gray-700/80 rounded-full hover:bg-purple-600 transition duration-200" aria-label="Próxima página">
             <ChevronRightIcon />
           </button>
         </div>

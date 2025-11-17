@@ -16,14 +16,25 @@
         background-color: #00000c;
       }
 
+      body::-webkit-scrollbar {
+        width: 8px;
+      }
+      body::-webkit-scrollbar-track {
+        background: #0d0d2b;
+      }
+      body::-webkit-scrollbar-thumb {
+        background-color: #58589a;
+        border-radius: 20px;
+      }
+
       .font-lora {
         font-family: 'Lora', serif;
       }
       
       .animated-galaxy {
-        background: linear-gradient(90deg, #00000c, #0d0d2b, #00000c);
-        background-size: 200% 100%;
-        animation: gradient-animation 25s ease infinite;
+        background: linear-gradient(270deg, #0d0d2b, #1a1a3a, #0d0d2b, #00000c);
+        background-size: 400% 400%;
+        animation: gradient-animation 40s ease infinite;
         position: relative;
         overflow: hidden;
       }
@@ -34,67 +45,103 @@
         100% { background-position: 0% 50%; }
       }
 
-      .stars {
+      /* Parallax Stars Effect */
+      .stars, .stars2, .stars3 {
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         height: 100%;
-        background-image:
-          radial-gradient(1px 1px at 20% 30%, #9c9cff, transparent),
-          radial-gradient(1px 1px at 80% 10%, #ffffff, transparent),
-          radial-gradient(1px 1px at 50% 50%, #a2a2ff, transparent),
-          radial-gradient(2px 2px at 90% 80%, #ffffff, transparent),
-          radial-gradient(1px 1px at 10% 90%, #d4d4ff, transparent),
-          radial-gradient(1px 1px at 40% 60%, #c4c4ff, transparent),
-          radial-gradient(2px 2px at 70% 20%, #ffffff, transparent);
-        background-size: 100% 100%;
-        animation: stars-animation 60s linear infinite;
+        background-repeat: repeat;
       }
 
-      @keyframes stars-animation {
-        from { transform: translateY(0); }
-        to { transform: translateY(-1000px); }
+      .stars {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='10' cy='10' r='1' fill='%23fff'/%3E%3Ccircle cx='50' cy='80' r='0.5' fill='%23fff'/%3E%3Ccircle cx='80' cy='30' r='1' fill='%23fff'/%3E%3C/svg%3E");
+        background-size: 200px 200px;
+        animation: stars-move 150s linear infinite;
+      }
+      .stars2 {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='25' cy='50' r='1' fill='%23aaa'/%3E%3Ccircle cx='75' cy='20' r='0.5' fill='%23aaa'/%3E%3Ccircle cx='90' cy='90' r='1' fill='%23aaa'/%3E%3C/svg%3E");
+        background-size: 300px 300px;
+        animation: stars-move 300s linear infinite;
+      }
+       .stars3 {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Ccircle cx='40' cy='40' r='1' fill='%23ddd'/%3E%3Ccircle cx='60' cy='10' r='0.5' fill='%23ddd'/%3E%3C/svg%3E");
+        background-size: 500px 500px;
+        animation: stars-move 450s linear infinite;
+      }
+
+      @keyframes stars-move {
+        from { background-position-y: 0px; }
+        to { background-position-y: -10000px; }
       }
 
       .glass-card {
-        background: rgba(23, 23, 43, 0.4); /* Equivalent to bg-gray-800/40 or a custom darker shade */
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(129, 118, 255, 0.18);
+        background: rgba(26, 26, 46, 0.6);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(173, 161, 255, 0.2);
         box-shadow: 0 8px 32px 0 rgba(13, 13, 31, 0.37);
+        transition: background 0.3s, border 0.3s;
       }
       
-      @keyframes page-turn-next-anim {
+      @keyframes content-fade-in-next {
         from {
           opacity: 0;
-          transform: perspective(1500px) translateX(25%) rotateY(-25deg);
+          transform: translateX(20px) scale(0.98);
         }
         to {
           opacity: 1;
-          transform: perspective(1500px) translateX(0) rotateY(0);
+          transform: translateX(0) scale(1);
         }
       }
 
-      @keyframes page-turn-prev-anim {
+      @keyframes content-fade-in-prev {
         from {
           opacity: 0;
-          transform: perspective(1500px) translateX(-25%) rotateY(25deg);
+          transform: translateX(-20px) scale(0.98);
         }
         to {
           opacity: 1;
-          transform: perspective(1500px) translateX(0) rotateY(0);
+          transform: translateX(0) scale(1);
         }
       }
 
-      .page-turn-next {
-        animation: page-turn-next-anim 0.6s ease-out;
-        transform-origin: left center;
+      .content-next {
+        animation: content-fade-in-next 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
       }
       
-      .page-turn-prev {
-        animation: page-turn-prev-anim 0.6s ease-out;
-        transform-origin: right center;
+      .content-prev {
+        animation: content-fade-in-prev 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      }
+
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .fade-in-up {
+        animation: fadeInUp 0.8s ease-out forwards;
+        opacity: 0;
+      }
+      .delay-1 { animation-delay: 0.2s; }
+      .delay-2 { animation-delay: 0.4s; }
+
+      .magic-button {
+        position: relative;
+        overflow: hidden;
+      }
+      .magic-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+        transition: all 650ms;
+      }
+      .magic-button:hover::before {
+        left: 100%;
       }
 
       @media print {
@@ -132,6 +179,8 @@
   <body>
     <div class="fixed inset-0 -z-10 animated-galaxy">
       <div class="stars"></div>
+      <div class="stars2"></div>
+      <div class="stars3"></div>
     </div>
     <div id="root" class="relative z-10"></div>
     <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>

@@ -143,7 +143,7 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 sm:p-6 lg:p-8 font-nunito">
-      <header className="w-full max-w-5xl text-center mb-10">
+      <header className="w-full max-w-5xl text-center mb-10 fade-in-up">
         <h1 className="text-5xl sm:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 font-lora">
           Fábula Mágica AI
         </h1>
@@ -153,12 +153,12 @@ function App() {
       </header>
       
       <main className="w-full max-w-5xl flex-grow">
-        <div className="glass-card p-6 sm:p-8 rounded-2xl mb-8">
+        <div className="glass-card p-6 sm:p-8 rounded-2xl mb-8 fade-in-up delay-1">
           <StoryGeneratorForm onGenerate={handleGenerateStory} isLoading={generationStatus.isLoading} />
         </div>
 
         {error && (
-          <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-center mb-8">
+          <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-center mb-8 fade-in-up">
             <p>{error}</p>
           </div>
         )}
@@ -166,7 +166,7 @@ function App() {
         {generationStatus.isLoading && <LoadingIndicator message={generationStatus.message} />}
 
         {storyPages.length > 0 && (
-          <div id="storybook-container">
+          <div id="storybook-container" className="fade-in-up delay-2">
             <StorybookView 
               title={storyTitle} 
               pages={storyPages} 
@@ -179,7 +179,7 @@ function App() {
           </div>
         )}
       </main>
-      <footer className="w-full max-w-4xl text-center mt-12 text-gray-500 text-sm">
+      <footer className="w-full max-w-4xl text-center mt-12 text-gray-500 text-sm fade-in-up delay-2">
         <p>Desenvolvido com Google Gemini</p>
       </footer>
     </div>

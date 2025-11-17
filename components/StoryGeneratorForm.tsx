@@ -118,7 +118,7 @@ export const StoryGeneratorForm: React.FC<StoryGeneratorFormProps> = ({ onGenera
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="relative">
-        <label htmlFor="plot" className="block text-sm font-medium text-gray-300 mb-2">
+        <label htmlFor="plot" className="block text-sm font-semibold text-purple-300 mb-2">
           Qual é a Aventura de Hoje?
         </label>
         <textarea
@@ -126,11 +126,11 @@ export const StoryGeneratorForm: React.FC<StoryGeneratorFormProps> = ({ onGenera
           value={plot}
           onChange={(e) => setPlot(e.target.value)}
           placeholder="Descreva a jornada mágica que você imagina... ou clique nas estrelas para uma centelha de inspiração!"
-          className="w-full h-32 bg-gray-700 border border-gray-600 text-white rounded-lg p-3 pr-12 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200 resize-none"
+          className="w-full h-32 bg-gray-900/50 border border-gray-600 text-white rounded-lg p-4 pr-14 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200 resize-none placeholder-gray-500"
           required
           disabled={isLoading}
         />
-        <div className="absolute right-3 top-[38px] flex flex-col space-y-2">
+        <div className="absolute right-3 top-[42px] flex flex-col space-y-3">
             <button
               type="button"
               onClick={handleSuggestPlot}
@@ -163,13 +163,13 @@ export const StoryGeneratorForm: React.FC<StoryGeneratorFormProps> = ({ onGenera
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <label htmlFor="character-upload" className="block text-sm font-medium text-gray-300 mb-2">
-            Traga seu Herói à Vida (Opcional)
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        <div className="md:col-span-1">
+          <label htmlFor="character-upload" className="block text-sm font-semibold text-purple-300 mb-2">
+            Seu Herói (Opcional)
           </label>
            <div 
-                className="relative mt-1 flex justify-center items-center h-40 w-full px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md cursor-pointer hover:border-purple-500 transition-colors"
+                className="relative mt-1 group w-full aspect-square flex justify-center items-center p-2 border-2 border-gray-600 border-dashed rounded-full cursor-pointer hover:border-purple-500 transition-colors bg-gray-900/50"
                 onClick={() => !characterImage && characterFileInputRef.current?.click()}
             >
                 <input
@@ -182,34 +182,34 @@ export const StoryGeneratorForm: React.FC<StoryGeneratorFormProps> = ({ onGenera
                     disabled={isLoading}
                 />
                 {characterImage ? (
-                    <div className="relative group h-full">
-                        <img src={characterImage.url} alt="Pré-visualização do personagem" className="h-full w-auto object-contain rounded-md" />
+                    <>
+                        <img src={characterImage.url} alt="Pré-visualização do personagem" className="h-full w-full object-cover rounded-full" />
                         <button
                             type="button"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 removeCharacterImage();
                             }}
-                            className="absolute top-0 right-0 -mt-2 -mr-8 bg-red-600 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-600/80 text-white rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity z-10"
                             aria-label="Remover imagem"
                             disabled={isLoading}
                         >
                             <XIcon />
                         </button>
-                    </div>
+                        <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </>
                 ) : (
-                    <div className="space-y-1 text-center">
+                    <div className="text-center">
                         <UploadIcon />
-                        <p className="text-sm text-gray-400">
-                            <span className="font-semibold text-purple-400">Envie uma foto do seu herói</span>
+                        <p className="mt-2 text-xs text-gray-400">
+                            <span className="font-semibold text-purple-400">Clique para enviar</span>
                         </p>
-                        <p className="text-xs text-gray-500">PNG, JPG, WEBP</p>
                     </div>
                 )}
             </div>
         </div>
-        <div>
-          <label htmlFor="numPages" className="block text-sm font-medium text-gray-300 mb-2">
+        <div className="md:col-span-2">
+          <label htmlFor="numPages" className="block text-sm font-semibold text-purple-300 mb-2">
             Capítulos da Aventura
           </label>
           <input
@@ -219,7 +219,7 @@ export const StoryGeneratorForm: React.FC<StoryGeneratorFormProps> = ({ onGenera
             onChange={(e) => setNumPages(Math.max(1, parseInt(e.target.value, 10)) || 1)}
             min="1"
             max="50"
-            className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200 mt-1"
+            className="w-full bg-gray-900/50 border border-gray-600 text-white rounded-lg p-3 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200 mt-1 placeholder-gray-500"
             required
             disabled={isLoading}
           />
@@ -228,7 +228,7 @@ export const StoryGeneratorForm: React.FC<StoryGeneratorFormProps> = ({ onGenera
       <button
         type="submit"
         disabled={isLoading || !plot.trim()}
-        className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3 px-6 rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-lg"
+        className="w-full magic-button bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3 px-6 rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-lg shadow-purple-900/50"
       >
         {isLoading ? 'Criando Magia...' : 'Começar a Magia!'}
       </button>
