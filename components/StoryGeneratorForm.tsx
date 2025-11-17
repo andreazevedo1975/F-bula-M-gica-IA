@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import type { UploadedImage } from '../types';
 import UploadIcon from './icons/UploadIcon';
@@ -118,13 +119,13 @@ export const StoryGeneratorForm: React.FC<StoryGeneratorFormProps> = ({ onGenera
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="relative">
         <label htmlFor="plot" className="block text-sm font-medium text-gray-300 mb-2">
-          Enredo da História
+          Qual é a Aventura de Hoje?
         </label>
         <textarea
           id="plot"
           value={plot}
           onChange={(e) => setPlot(e.target.value)}
-          placeholder="Comece a escrever sua aventura aqui... ou peça uma sugestão à IA!"
+          placeholder="Descreva a jornada mágica que você imagina... ou clique nas estrelas para uma centelha de inspiração!"
           className="w-full h-32 bg-gray-700 border border-gray-600 text-white rounded-lg p-3 pr-12 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition duration-200 resize-none"
           required
           disabled={isLoading}
@@ -135,8 +136,8 @@ export const StoryGeneratorForm: React.FC<StoryGeneratorFormProps> = ({ onGenera
               onClick={handleSuggestPlot}
               disabled={isLoading || isSuggesting}
               className="text-gray-400 hover:text-purple-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              aria-label="Sugerir Enredo"
-              title="Sugerir Enredo"
+              aria-label="Centelha de Inspiração"
+              title="Centelha de Inspiração"
             >
               {isSuggesting ? (
                  <div className="w-5 h-5 border-2 border-t-purple-400 border-gray-600 rounded-full animate-spin"></div>
@@ -165,7 +166,7 @@ export const StoryGeneratorForm: React.FC<StoryGeneratorFormProps> = ({ onGenera
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <label htmlFor="character-upload" className="block text-sm font-medium text-gray-300 mb-2">
-            Personagem (Opcional)
+            Traga seu Herói à Vida (Opcional)
           </label>
            <div 
                 className="relative mt-1 flex justify-center items-center h-40 w-full px-6 pt-5 pb-6 border-2 border-gray-600 border-dashed rounded-md cursor-pointer hover:border-purple-500 transition-colors"
@@ -200,7 +201,7 @@ export const StoryGeneratorForm: React.FC<StoryGeneratorFormProps> = ({ onGenera
                     <div className="space-y-1 text-center">
                         <UploadIcon />
                         <p className="text-sm text-gray-400">
-                            <span className="font-semibold text-purple-400">Clique para enviar</span>
+                            <span className="font-semibold text-purple-400">Envie uma foto do seu herói</span>
                         </p>
                         <p className="text-xs text-gray-500">PNG, JPG, WEBP</p>
                     </div>
@@ -209,7 +210,7 @@ export const StoryGeneratorForm: React.FC<StoryGeneratorFormProps> = ({ onGenera
         </div>
         <div>
           <label htmlFor="numPages" className="block text-sm font-medium text-gray-300 mb-2">
-            Número de Páginas
+            Capítulos da Aventura
           </label>
           <input
             id="numPages"
@@ -229,7 +230,7 @@ export const StoryGeneratorForm: React.FC<StoryGeneratorFormProps> = ({ onGenera
         disabled={isLoading || !plot.trim()}
         className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3 px-6 rounded-lg hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 shadow-lg"
       >
-        {isLoading ? 'Gerando...' : 'Criar Meu Livro de Histórias'}
+        {isLoading ? 'Criando Magia...' : 'Começar a Magia!'}
       </button>
     </form>
   );

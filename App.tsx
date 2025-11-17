@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoogleGenAI } from '@google/genai';
 import { StoryGeneratorForm } from './components/StoryGeneratorForm';
 import { StorybookView } from './components/StorybookView';
@@ -10,6 +10,7 @@ import type { StoryPageData, GenerationStatus, UploadedImage } from './types';
 function App() {
   const [storyPages, setStoryPages] = useState<StoryPageData[]>([]);
   const [storyTitle, setStoryTitle] = useState<string>('');
+  const [characterImageForStory, setCharacterImageForStory] = useState<UploadedImage | null>(null);
   const [generationStatus, setGenerationStatus] = useState<GenerationStatus>({
     isLoading: false,
     message: ''
@@ -21,20 +22,34 @@ function App() {
   });
   const [error, setError] = useState<string | null>(null);
 
+  // Efeito para limpar a URL do objeto de vídeo para evitar vazamentos de memória
+  useEffect(() => {
+    const currentVideoUrl = videoUrl;
+    return () => {
+      if (currentVideoUrl && currentVideoUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(currentVideoUrl);
+      }
+    };
+  }, [videoUrl]);
+
   const handleGenerateStory = async (plot: string, numPages: number, characterImage: UploadedImage | null) => {
-    setGenerationStatus({ isLoading: true, message: 'Criando um título para sua história...' });
+    setGenerationStatus({ isLoading: true, message: 'Invocando um título encantado...' });
     setError(null);
     setStoryPages([]);
     setStoryTitle('');
+    if (videoUrl) {
+      URL.revokeObjectURL(videoUrl); // Limpa a URL do vídeo anterior
+    }
     setVideoUrl(null);
     setVideoGenerationStatus({ isLoading: false, message: '' });
+    setCharacterImageForStory(characterImage);
 
     try {
       // 1. Generate title from plot
       const title = await generateTitleFromPlot(plot, characterImage);
       setStoryTitle(title);
       
-      setGenerationStatus({ isLoading: true, message: 'Criando a estrutura da sua história...' });
+      setGenerationStatus({ isLoading: true, message: 'Tecendo os fios da sua aventura...' });
 
       // 2. Generate story text and image prompts from plot
       const storyContent = await generateStoryContent(plot, numPages, characterImage);
@@ -52,14 +67,14 @@ function App() {
         // 3. Generate image
         setGenerationStatus({ 
           isLoading: true, 
-          message: `Gerando imagem para a página ${i + 1} de ${numPages}...` 
+          message: `Pintando a magia na página ${i + 1} de ${numPages}...` 
         });
         const imageUrl = await generateImage(page.imagePrompt, characterImage);
 
         // 4. Generate audio
          setGenerationStatus({ 
           isLoading: true, 
-          message: `Gerando narração para a página ${i + 1} de ${numPages}...` 
+          message: `Dando voz à história na página ${i + 1} de ${numPages}...` 
         });
         const audioData = await generateSpeech(page.text);
 
@@ -78,6 +93,9 @@ function App() {
   const handleGenerateVideo = async () => {
     if (!storyPages.length) return;
     
+    if (videoUrl) {
+      URL.revokeObjectURL(videoUrl);
+    }
     setVideoUrl(null);
     setError(null);
 
@@ -89,7 +107,7 @@ function App() {
             // If user cancels or key is invalid, the API call will fail and be caught by the catch block.
         }
 
-        setVideoGenerationStatus({ isLoading: true, message: 'Iniciando a geração do vídeo...' });
+        setVideoGenerationStatus({ isLoading: true, message: 'Preparando a animação mágica...' });
         
         const aiInstance = new GoogleGenAI({ apiKey: process.env.API_KEY });
         
@@ -101,11 +119,14 @@ function App() {
         );
         
         setVideoUrl(url);
-        setVideoGenerationStatus({ isLoading: false, message: 'Vídeo pronto!' });
+        setVideoGenerationStatus({ isLoading: false, message: 'Seu desenho animado está pronto!' });
     } catch (err: any) {
         console.error("Erro ao gerar vídeo:", err);
-        if (err.message && err.message.includes("Requested entity was not found")) {
+        const errorString = JSON.stringify(err);
+        if (errorString.includes("Requested entity was not found")) {
             setError("Sua chave de API pode não ter acesso ao Veo. Por favor, selecione uma chave diferente e tente novamente. Visite ai.google.dev/gemini-api/docs/billing para mais informações.");
+            // Per guidelines, prompt the user to select a new key.
+            window.aistudio.openSelectKey();
         } else {
             setError('Ocorreu um erro ao gerar o vídeo. Por favor, tente novamente.');
         }
@@ -127,7 +148,7 @@ function App() {
           Fábula Mágica AI
         </h1>
         <p className="mt-4 text-lg text-gray-300">
-          Dê vida à sua imaginação. Crie, ilustre e narre livros de histórias encantados com o poder da IA.
+          Onde a imaginação dos seus filhos ganha vida. Crie, ilustre e narre fábulas mágicas e personalizadas em minutos.
         </p>
       </header>
       
@@ -150,6 +171,7 @@ function App() {
               title={storyTitle} 
               pages={storyPages} 
               onUpdatePage={handleUpdatePage}
+              characterImage={characterImageForStory}
               videoUrl={videoUrl}
               videoGenerationStatus={videoGenerationStatus}
               onGenerateVideo={handleGenerateVideo}

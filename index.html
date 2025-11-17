@@ -13,7 +13,7 @@
       body {
         font-family: 'Nunito', sans-serif;
         color: #E5E7EB; /* text-gray-200 */
-        overflow-x: hidden;
+        background-color: #00000c;
       }
 
       .font-lora {
@@ -64,6 +64,38 @@
         border: 1px solid rgba(129, 118, 255, 0.18);
         box-shadow: 0 8px 32px 0 rgba(13, 13, 31, 0.37);
       }
+      
+      @keyframes page-turn-next-anim {
+        from {
+          opacity: 0;
+          transform: perspective(1500px) translateX(25%) rotateY(-25deg);
+        }
+        to {
+          opacity: 1;
+          transform: perspective(1500px) translateX(0) rotateY(0);
+        }
+      }
+
+      @keyframes page-turn-prev-anim {
+        from {
+          opacity: 0;
+          transform: perspective(1500px) translateX(-25%) rotateY(25deg);
+        }
+        to {
+          opacity: 1;
+          transform: perspective(1500px) translateX(0) rotateY(0);
+        }
+      }
+
+      .page-turn-next {
+        animation: page-turn-next-anim 0.6s ease-out;
+        transform-origin: left center;
+      }
+      
+      .page-turn-prev {
+        animation: page-turn-prev-anim 0.6s ease-out;
+        transform-origin: right center;
+      }
 
       @media print {
         body * {
@@ -97,8 +129,10 @@
 }
 </script>
 </head>
-  <body class="animated-galaxy">
-    <div class="stars"></div>
+  <body>
+    <div class="fixed inset-0 -z-10 animated-galaxy">
+      <div class="stars"></div>
+    </div>
     <div id="root" class="relative z-10"></div>
     <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
     <script type="module" src="/index.tsx"></script>

@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import type { StoryContentResponse, UploadedImage, PrebuiltVoice, StoryPageData } from '../types';
 import type { Part } from '@google/genai';
@@ -216,19 +217,46 @@ export async function generateSpeech(text: string, voice: PrebuiltVoice = 'Kore'
   }
 }
 
+export async function generateCoverAudio(title: string): Promise<string> {
+  const text = `Apresentando: ${title}. Uma jornada mágica está prestes a começar.`;
+  const voice: PrebuiltVoice = 'Zephyr'; // Voz de narrador distinta
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash-preview-tts",
+      contents: [{ parts: [{ text }] }],
+      config: {
+        responseModalities: [Modality.AUDIO],
+        speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: voice },
+            },
+        },
+      },
+    });
+    const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!base64Audio) {
+        throw new Error("Nenhum dado de áudio foi gerado para a capa.");
+    }
+    return base64Audio;
+  } catch (error) {
+    console.error("Erro ao gerar áudio da capa:", error);
+    throw new Error("Falha ao gerar áudio da capa a partir da API Gemini.");
+  }
+}
+
 export async function generateStoryVideo(
   aiInstance: GoogleGenAI,
   title: string,
   firstPage: StoryPageData,
   onProgress: (message: string) => void
 ): Promise<string> {
-    onProgress('Preparando os dados para o vídeo...');
+    onProgress('Reunindo os encantos para o desenho...');
     const prompt = `Crie um vídeo animado curto baseado nesta história infantil: Título: "${title}". A primeira cena mostra: "${firstPage.text}".`;
     
     const [header, base64Data] = firstPage.imageUrl.split(',');
     const mimeType = header.match(/:(.*?);/)?.[1] || 'image/png';
 
-    onProgress('Enviando solicitação para a API de vídeo...');
+    onProgress('Conversando com os duendes da animação...');
     let operation = await aiInstance.models.generateVideos({
         model: 'veo-3.1-fast-generate-preview',
         prompt: prompt,
@@ -243,10 +271,10 @@ export async function generateStoryVideo(
         }
     });
     
-    onProgress('A geração do vídeo começou. Isso pode levar alguns minutos...');
+    onProgress('A magia da animação começou! Isso pode levar um tempinho...');
     while (!operation.done) {
         await new Promise(resolve => setTimeout(resolve, 10000));
-        onProgress('Verificando o status da geração do vídeo...');
+        onProgress('Consultando a bola de cristal da animação...');
         operation = await aiInstance.operations.getVideosOperation({ operation: operation });
     }
 
@@ -254,14 +282,24 @@ export async function generateStoryVideo(
         throw new Error(`Erro na operação de vídeo: ${operation.error.message}`);
     }
 
-    onProgress('Vídeo gerado! Obtendo o link para download...');
+    onProgress('Animação pronta! Preparando o portal de download...');
     const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
 
     if (!downloadLink) {
         throw new Error("Não foi possível obter o link de download do vídeo.");
     }
     
-    // A chave de API é necessária para acessar a URL de download do vídeo gerado.
-    // Ela é injetada no ambiente de execução.
-    return `${downloadLink}&key=${process.env.API_KEY}`;
+    onProgress('Trazendo o desenho para o nosso mundo...');
+    const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Erro ao baixar o vídeo:", response.status, errorText);
+      throw new Error(`Falha ao baixar o vídeo gerado. Status: ${response.status}`);
+    }
+    
+    const videoBlob = await response.blob();
+    const objectUrl = URL.createObjectURL(videoBlob);
+    
+    return objectUrl;
 }
